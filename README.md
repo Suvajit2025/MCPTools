@@ -84,7 +84,7 @@ Early development versions may keep some projects and documents at the repositor
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-org/MCPTools.git
+git clone https://github.com/Suvajit2025/MCPTools.git
 cd MCPTools
 ```
 
