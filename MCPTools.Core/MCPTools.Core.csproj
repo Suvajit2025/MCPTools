@@ -6,4 +6,20 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="Abstractions\" />
+    <Folder Include="Configuration\" />
+    <Folder Include="Constants\" />
+    <Folder Include="Exceptions\" />
+    <Folder Include="Extensions\" />
+    <Folder Include="Tools\" />
+    <Folder Include="Interfaces\" />
+    <Folder Include="Models\" />
+    <Folder Include="Versioning\" />
+    <Folder Include="Utilities\" />
+    <Folder Include="Templates\" />
+    <Folder Include="TemplateEngine\" />
+    <Folder Include="Services\" />
+  </ItemGroup>
+
 </Project>

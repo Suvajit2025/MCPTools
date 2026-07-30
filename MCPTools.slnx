@@ -1,6 +1,16 @@
 <Solution>
-  <Folder Name="/docs/" />
+  <Folder Name="/docs/">
+    <File Path="Architecture.md" />
+    <File Path="CodingStandards.md" />
+    <File Path="DesignDecisions.md" />
+    <File Path="MCPIntegration.md" />
+    <File Path="NamingConventions.md" />
+    <File Path="Roadmap.md" />
+    <File Path="TemplateEngine.md" />
+    <File Path="ToolLifecycle.md" />
+  </Folder>
   <Folder Name="/samples/" />
+  <Folder Name="/Solution Items/" />
   <Folder Name="/src/">
     <Project Path="MCPTools.Console/MCPTools.Console.csproj" />
     <Project Path="MCPTools.Core/MCPTools.Core.csproj" />
