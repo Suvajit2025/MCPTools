@@ -1,6 +1,8 @@
 <Solution>
   <Folder Name="/docs/">
+    <File Path="AGENTS.md" />
     <File Path="Architecture.md" />
+    <File Path="CLAUDE.md" />
     <File Path="CodingStandards.md" />
     <File Path="DesignDecisions.md" />
     <File Path="MCPIntegration.md" />
@@ -10,7 +12,9 @@
     <File Path="ToolLifecycle.md" />
   </Folder>
   <Folder Name="/samples/" />
-  <Folder Name="/Solution Items/" />
+  <Folder Name="/Solution Items/">
+    <File Path="README.md" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="MCPTools.Console/MCPTools.Console.csproj" />
     <Project Path="MCPTools.Core/MCPTools.Core.csproj" />
