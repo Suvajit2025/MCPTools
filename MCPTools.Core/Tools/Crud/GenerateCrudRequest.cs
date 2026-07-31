@@ -6,14 +6,9 @@ namespace MCPTools.Core.Tools.Crud;
 public sealed class GenerateCrudRequest
 {
     /// <summary>
-    /// Gets the absolute path of the target solution.
-    /// </summary>
-    public required string ProjectPath { get; init; }
-
-    /// <summary>
     /// Gets the directory where generated files will be written.
     /// </summary>
-    public required string OutputPath { get; init; }
+    public required string OutputDirectory { get; init; }
 
     /// <summary>
     /// Gets the root namespace of the generated project.
@@ -26,14 +21,34 @@ public sealed class GenerateCrudRequest
     public required string TableName { get; init; }
 
     /// <summary>
+    /// Gets the entity name.
+    /// </summary>
+    public required string EntityName { get; init; }
+
+    /// <summary>
+    /// Gets the plural entity name.
+    /// </summary>
+    public string? PluralEntityName { get; init; }
+
+    /// <summary>
     /// Gets the primary key column.
     /// </summary>
     public required string PrimaryKey { get; init; }
 
     /// <summary>
-    /// Gets the entity or model name.
+    /// Gets the primary key type.
     /// </summary>
-    public required string ModelName { get; init; }
+    public required string PrimaryKeyType { get; init; }
+
+    /// <summary>
+    /// Gets the author associated with generated artifacts.
+    /// </summary>
+    public string? Author { get; init; }
+
+    /// <summary>
+    /// Gets the company name associated with generated artifacts.
+    /// </summary>
+    public string? CompanyName { get; init; }
 
     /// <summary>
     /// Gets a value indicating whether a controller should be generated.

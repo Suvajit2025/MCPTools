@@ -21,6 +21,16 @@ public sealed class GenerateCrudResponse
     public IReadOnlyList<string> SkippedFiles { get; init; } = [];
 
     /// <summary>
+    /// Gets the errors produced during CRUD generation.
+    /// </summary>
+    public IReadOnlyList<string> Errors { get; init; } = [];
+
+    /// <summary>
+    /// Gets the elapsed CRUD generation time.
+    /// </summary>
+    public TimeSpan ElapsedTime { get; init; }
+
+    /// <summary>
     /// Gets a human-readable summary of the CRUD generation result.
     /// </summary>
     public string? Message { get; init; }

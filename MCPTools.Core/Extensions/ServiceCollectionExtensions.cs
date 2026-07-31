@@ -1,3 +1,4 @@
+using MCPTools.Core.Configuration;
 using MCPTools.Core.Services;
 using MCPTools.Core.TemplateEngine;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,10 +21,20 @@ public static class ServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
+        services.AddOptions<MCPToolsOptions>();
+        services.AddOptions<TemplateOptions>();
+        services.AddOptions<GeneratorOptions>();
+        services.AddOptions<OutputOptions>();
+        services.AddOptions<LoggingOptions>();
+
         services.TryAddSingleton<ITemplateEngine, TemplateEngine.TemplateEngine>();
         services.TryAddSingleton<FileTemplateLoader>();
         services.TryAddSingleton<ToolRegistry>();
         services.TryAddSingleton<ToolExecutor>();
+        services.TryAddSingleton<PlaceholderBuilder>();
+        services.TryAddSingleton<FileGenerator>();
+        services.TryAddSingleton<TemplateDiscoveryService>();
+        services.TryAddSingleton<NamingConventionService>();
 
         return services;
     }

@@ -51,6 +51,11 @@ public static class PlaceholderConstants
     public const string TableName = "{{TableName}}";
 
     /// <summary>
+    /// Represents the route placeholder.
+    /// </summary>
+    public const string Route = "{{Route}}";
+
+    /// <summary>
     /// Represents the primary key placeholder.
     /// </summary>
     public const string PrimaryKey = "{{PrimaryKey}}";
@@ -119,6 +124,11 @@ public static class PlaceholderConstants
     /// Represents the connection string placeholder.
     /// </summary>
     public const string ConnectionString = "{{ConnectionString}}";
+
+    /// <summary>
+    /// Represents the database placeholder.
+    /// </summary>
+    public const string Database = "{{Database}}";
 
     /// <summary>
     /// Represents the API version placeholder.
