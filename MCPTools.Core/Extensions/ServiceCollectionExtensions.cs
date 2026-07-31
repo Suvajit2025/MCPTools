@@ -5,9 +5,6 @@ using MCPTools.Core.Services;
 using MCPTools.Core.Services.Schema;
 using MCPTools.Core.Services.Solution;
 using MCPTools.Core.TemplateEngine;
-using MCPTools.Core.Tools.Crud;
-using MCPTools.Core.Tools.Database;
-using MCPTools.Core.Tools.Solution;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -48,9 +45,27 @@ public static class ServiceCollectionExtensions
         services.TryAddSingleton<FileGenerator>();
         services.TryAddSingleton<TemplateDiscoveryService>();
         services.TryAddSingleton<NamingConventionService>();
-        services.TryAddTransient<GenerateCrudTool>();
-        services.TryAddTransient<GenerateCrudFromDatabaseTool>();
-        services.TryAddTransient<AnalyzeSolutionTool>();
+        services.AddMCPToolsFromAssembly(typeof(ServiceCollectionExtensions).Assembly);
+
+        return services;
+    }
+
+    private static IServiceCollection AddMCPToolsFromAssembly(
+        this IServiceCollection services,
+        System.Reflection.Assembly assembly)
+    {
+        var toolTypes = assembly
+            .GetTypes()
+            .Where(type => type is { IsClass: true, IsAbstract: false }
+                && type.GetInterfaces().Any(interfaceType =>
+                    interfaceType.IsGenericType
+                    && interfaceType.GetGenericTypeDefinition() == typeof(ITool<,>)))
+            .OrderBy(type => type.FullName, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var toolType in toolTypes)
+        {
+            services.TryAddTransient(toolType);
+        }
 
         return services;
     }

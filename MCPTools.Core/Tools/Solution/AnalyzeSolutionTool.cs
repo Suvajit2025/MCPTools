@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using MCPTools.Core.Constants;
 using MCPTools.Core.Exceptions;
 using MCPTools.Core.Interfaces;
 using MCPTools.Core.Models.Solution;
@@ -35,9 +36,14 @@ public sealed class AnalyzeSolutionTool : ToolBase<AnalyzeSolutionRequest, Solut
         {
             Name = "analyze-solution",
             DisplayName = "Analyze Solution",
-            Category = "Solution",
+            Category = ToolMetadataConstants.Categories.Solution,
             Version = "1.0.0",
-            Description = "Analyzes a .NET solution and returns projects, source structure, and dependencies."
+            Description = "Analyzes a .NET solution and returns projects, source structure, and dependencies.",
+            Tags =
+            [
+                ToolMetadataConstants.Tags.Analysis,
+                ToolMetadataConstants.Tags.Solution
+            ]
         })
     {
         _solutionScanner = solutionScanner ?? throw new ArgumentNullException(nameof(solutionScanner));

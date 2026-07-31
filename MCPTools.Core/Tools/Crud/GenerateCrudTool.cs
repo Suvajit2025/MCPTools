@@ -38,9 +38,14 @@ public sealed class GenerateCrudTool : ToolBase<GenerateCrudRequest, GenerateCru
         {
             Name = "generate-crud",
             DisplayName = "Generate CRUD",
-            Category = "Generation",
+            Category = ToolMetadataConstants.Categories.Generation,
             Version = "1.0.0",
-            Description = "Generates CRUD source code for a database entity."
+            Description = "Generates CRUD source code for a database entity.",
+            Tags =
+            [
+                ToolMetadataConstants.Tags.Crud,
+                ToolMetadataConstants.Tags.Generation
+            ]
         })
     {
         _templateEngine = templateEngine ?? throw new ArgumentNullException(nameof(templateEngine));

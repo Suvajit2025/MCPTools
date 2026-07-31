@@ -19,5 +19,6 @@
     <Project Path="MCPTools.Console/MCPTools.Console.csproj" />
     <Project Path="MCPTools.Core/MCPTools.Core.csproj" />
     <Project Path="MCPTools.Tests/MCPTools.Tests.csproj" />
+    <Project Path="src/MCPTools.Server/MCPTools.Server.csproj" />
   </Folder>
 </Solution>

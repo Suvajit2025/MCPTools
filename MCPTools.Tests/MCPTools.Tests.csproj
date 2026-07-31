@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MCPTools.Core\MCPTools.Core.csproj" />
+    <ProjectReference Include="..\src\MCPTools.Server\MCPTools.Server.csproj" />
   </ItemGroup>
 
   <ItemGroup>

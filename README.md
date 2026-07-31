@@ -110,6 +110,25 @@ dotnet build
 dotnet test
 ```
 
+### 6. Run the MCP Server Demo
+
+`MCPTools.Server` is a demonstration host for the server-side MCPTools pipeline. It does not integrate with an AI client yet.
+
+```bash
+dotnet run --project src/MCPTools.Server
+```
+
+Available interactive commands:
+
+```text
+list-tools
+run-tool GenerateCrudTool
+help
+exit
+```
+
+`list-tools` displays the tools discovered from `MCPTools.Core`. `run-tool GenerateCrudTool` invokes the existing CRUD generator using the sample values in `src/MCPTools.Server/appsettings.json`.
+
 ## Documentation
 
 Start here:

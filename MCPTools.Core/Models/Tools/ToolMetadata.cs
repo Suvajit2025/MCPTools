@@ -1,3 +1,5 @@
+using MCPTools.Core.Constants;
+
 namespace MCPTools.Core.Models.Tools;
 
 /// <summary>
@@ -34,4 +36,14 @@ public sealed class ToolMetadata
     /// Gets the tags associated with the tool.
     /// </summary>
     public IReadOnlyCollection<string> Tags { get; init; } = [];
+
+    /// <summary>
+    /// Gets the tool author.
+    /// </summary>
+    public string Author { get; init; } = ToolMetadataConstants.DefaultAuthor;
+
+    /// <summary>
+    /// Gets the supported framework version for the tool.
+    /// </summary>
+    public string SupportedFrameworkVersion { get; init; } = ToolMetadataConstants.SupportedFrameworkVersion;
 }

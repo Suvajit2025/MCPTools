@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using MCPTools.Core.Configuration;
+using MCPTools.Core.Constants;
 using MCPTools.Core.Exceptions;
 using MCPTools.Core.Extensions;
 using MCPTools.Core.Interfaces;
@@ -54,9 +55,15 @@ public sealed class GenerateCrudFromDatabaseTool
         {
             Name = "generate-crud-from-database",
             DisplayName = "Generate CRUD from Database",
-            Category = "Database",
+            Category = ToolMetadataConstants.Categories.Database,
             Version = "1.0.0",
-            Description = "Generates CRUD source code from an existing database table."
+            Description = "Generates CRUD source code from an existing database table.",
+            Tags =
+            [
+                ToolMetadataConstants.Tags.Crud,
+                ToolMetadataConstants.Tags.Database,
+                ToolMetadataConstants.Tags.Generation
+            ]
         })
     {
         _schemaProvider = schemaProvider ?? throw new ArgumentNullException(nameof(schemaProvider));
