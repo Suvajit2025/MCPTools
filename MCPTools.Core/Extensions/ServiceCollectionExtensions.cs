@@ -1,6 +1,13 @@
 using MCPTools.Core.Configuration;
+using MCPTools.Core.Interfaces;
+using MCPTools.Core.Models.Schema;
 using MCPTools.Core.Services;
+using MCPTools.Core.Services.Schema;
+using MCPTools.Core.Services.Solution;
 using MCPTools.Core.TemplateEngine;
+using MCPTools.Core.Tools.Crud;
+using MCPTools.Core.Tools.Database;
+using MCPTools.Core.Tools.Solution;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -26,15 +33,24 @@ public static class ServiceCollectionExtensions
         services.AddOptions<GeneratorOptions>();
         services.AddOptions<OutputOptions>();
         services.AddOptions<LoggingOptions>();
+        services.AddOptions<DatabaseConnectionOptions>();
 
         services.TryAddSingleton<ITemplateEngine, TemplateEngine.TemplateEngine>();
         services.TryAddSingleton<FileTemplateLoader>();
         services.TryAddSingleton<ToolRegistry>();
         services.TryAddSingleton<ToolExecutor>();
+        services.TryAddSingleton<IDatabaseConnectionFactory, SqlConnectionFactory>();
+        services.TryAddSingleton<ISchemaProvider, SqlServerSchemaProvider>();
+        services.TryAddSingleton<ISolutionScanner, SolutionScanner>();
+        services.TryAddSingleton<IRoslynParser, RoslynParser>();
+        services.TryAddSingleton<IDependencyAnalyzer, DependencyAnalyzer>();
         services.TryAddSingleton<PlaceholderBuilder>();
         services.TryAddSingleton<FileGenerator>();
         services.TryAddSingleton<TemplateDiscoveryService>();
         services.TryAddSingleton<NamingConventionService>();
+        services.TryAddTransient<GenerateCrudTool>();
+        services.TryAddTransient<GenerateCrudFromDatabaseTool>();
+        services.TryAddTransient<AnalyzeSolutionTool>();
 
         return services;
     }

@@ -1,6 +1,7 @@
 using MCPTools.Core.Configuration;
 using MCPTools.Core.Extensions;
-using MCPTools.Core.Tools.Crud;
+using MCPTools.Core.Models.Schema;
+using MCPTools.Core.Tools.Solution;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -13,13 +14,15 @@ builder.Configuration.AddJsonFile(
     reloadOnChange: true);
 
 builder.Services.AddMCPTools();
-builder.Services.AddTransient<GenerateCrudTool>();
 
 builder.Services.Configure<TemplateOptions>(
     builder.Configuration.GetSection("MCPTools:Templates"));
 
 builder.Services.Configure<OutputOptions>(
     builder.Configuration.GetSection("MCPTools:Output"));
+
+builder.Services.Configure<DatabaseConnectionOptions>(
+    builder.Configuration.GetSection("MCPTools:Database"));
 
 using var host = builder.Build();
 using var cancellationTokenSource = new CancellationTokenSource();
@@ -33,26 +36,27 @@ Console.CancelKeyPress += (_, eventArgs) =>
 try
 {
     var configuration = host.Services.GetRequiredService<IConfiguration>();
-    var tool = host.Services.GetRequiredService<GenerateCrudTool>();
+    var tool = host.Services.GetRequiredService<AnalyzeSolutionTool>();
     var request = CreateRequest(configuration);
 
-    WriteHeader("MCPTools CRUD Generator");
+    WriteHeader("MCPTools Solution Analyzer");
 
     var response = await tool.ExecuteAsync(request, cancellationTokenSource.Token);
 
-    WriteValue("Entity", request.EntityName);
-    WriteValue("Namespace", request.Namespace);
-    WriteValue("Generated Files", response.GeneratedFiles.Count.ToString());
-    WriteValue("Skipped Files", response.SkippedFiles.Count.ToString());
+    WriteValue("Solution", response.SolutionName ?? "Unknown");
+    WriteValue("Path", response.SolutionPath ?? request.SolutionPath);
+    WriteValue("Projects", response.ProjectCount.ToString());
+    WriteValue("Classes", response.ClassCount.ToString());
+    WriteValue("Methods", response.MethodCount.ToString());
+    WriteValue("Interfaces", response.InterfaceCount.ToString());
+    WriteValue("Dependencies", response.DependencyCount.ToString());
     WriteValue("Elapsed Time", $"{response.ElapsedTime.TotalMilliseconds:N0} ms");
-    WriteValue("Output", request.OutputDirectory);
 
     WriteSeparator();
 
     if (!response.Success)
     {
-        WriteLine(response.Message ?? "Generation failed.");
-        WriteLines(response.Errors);
+        WriteLine(response.Message ?? "Solution analysis failed.");
         return 1;
     }
 
@@ -73,25 +77,11 @@ catch (Exception exception)
     return 1;
 }
 
-static GenerateCrudRequest CreateRequest(IConfiguration configuration)
+static AnalyzeSolutionRequest CreateRequest(IConfiguration configuration)
 {
-    return new GenerateCrudRequest
+    return new AnalyzeSolutionRequest
     {
-        EntityName = GetRequiredValue(configuration, "Sample:EntityName"),
-        PluralEntityName = GetRequiredValue(configuration, "Sample:PluralEntityName"),
-        TableName = GetRequiredValue(configuration, "Sample:TableName"),
-        PrimaryKey = GetRequiredValue(configuration, "Sample:PrimaryKey"),
-        PrimaryKeyType = GetRequiredValue(configuration, "Sample:PrimaryKeyType"),
-        Namespace = GetRequiredValue(configuration, "Sample:Namespace"),
-        OutputDirectory = GetRequiredValue(configuration, "MCPTools:Output:OutputDirectory"),
-        Author = GetRequiredValue(configuration, "Sample:Author"),
-        CompanyName = GetRequiredValue(configuration, "Sample:CompanyName"),
-        GenerateRepository = true,
-        GenerateService = true,
-        GenerateController = true,
-        GenerateDto = true,
-        GenerateInterface = true,
-        OverwriteExistingFiles = configuration.GetValue("MCPTools:Output:OverwriteExistingFiles", false)
+        SolutionPath = GetRequiredValue(configuration, "SolutionAnalysis:SolutionPath")
     };
 }
 
@@ -117,14 +107,6 @@ static void WriteHeader(string title)
 static void WriteValue(string name, string value)
 {
     WriteLine($"{name}: {value}");
-}
-
-static void WriteLines(IEnumerable<string> values)
-{
-    foreach (var value in values)
-    {
-        WriteLine(value);
-    }
 }
 
 static void WriteInnerExceptions(Exception exception)
