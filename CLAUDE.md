@@ -137,3 +137,136 @@ When requirements are unclear, Claude Code should:
 - Make the smallest responsible change that satisfies the requirement.
 
 Claude Code should behave like a careful open-source maintainer: preserve the framework vision, keep changes reviewable, and leave the repository easier to understand than it was found.
+
+## Security Rules
+
+Claude Code must treat all tools as capability-restricted.
+
+Never assume permission to execute operations outside the exposed tool interface.
+
+Never bypass validation implemented by tools.
+
+Database tools must follow the principle of least privilege.
+
+Unless explicitly designed otherwise:
+
+- Never generate tools that execute arbitrary SQL.
+- Never execute INSERT, UPDATE, DELETE, DROP, ALTER, TRUNCATE, or EXEC statements.
+- Prefer metadata inspection over command execution.
+- Treat all user input as untrusted.
+- Use parameterized queries.
+- Never expose secrets, passwords, or connection strings in logs or generated code.
+
+## AI Independence
+
+MCPTools is AI-provider agnostic.
+
+Claude Code must never:
+
+- Assume Claude is the only client.
+- Assume ChatGPT is the only client.
+- Assume Gemini is the only client.
+- Assume a specific MCP server implementation.
+
+Every tool should be callable by any compliant MCP client.
+
+## Tool Design Principles
+
+Each Tool should have a single responsibility.
+
+A Tool should:
+
+- Accept strongly typed request models.
+- Return strongly typed response models.
+- Be deterministic whenever possible.
+- Avoid hidden side effects.
+- Avoid modifying external systems unless explicitly designed for that purpose.
+- Prefer analysis over execution.
+
+## Source Code Analysis
+
+When analyzing C# projects:
+
+- Prefer Roslyn over string parsing.
+- Never modify source code by regular expressions.
+- Use syntax trees and semantic models.
+- Preserve formatting whenever possible.
+- Preserve comments and XML documentation.
+
+## Performance
+
+Avoid unnecessary file scans.
+
+Reuse parsed models when possible.
+
+Avoid loading entire solutions repeatedly.
+
+Prefer asynchronous streaming APIs for large repositories.
+
+Cache metadata when appropriate.
+
+## Compatibility
+
+Public APIs should remain backward compatible.
+
+Breaking changes require:
+
+- Documentation update
+- Design decision update
+- Version increment
+- Migration guidance
+
+## Extensibility
+
+Prefer extending the framework through:
+
+- New Tools
+- New Providers
+- New Templates
+- New Parsers
+
+Avoid modifying existing components when extension points are available.
+
+Follow the Open/Closed Principle.
+
+## Non-Goals
+
+MCPTools is not:
+
+- An AI agent.
+- A chatbot.
+- A language model.
+- A replacement for Visual Studio.
+- A database administration tool.
+
+MCPTools provides reusable capabilities that AI clients can invoke through tools.
+
+## Versioning
+
+Follow Semantic Versioning.
+
+Patch:
+- Bug fixes
+
+Minor:
+- New tools
+- New providers
+
+Major:
+- Breaking changes
+
+## Long-Term Vision
+
+MCPTools aims to become a provider-agnostic Software Engineering Platform capable of:
+
+- Code Generation
+- Database Understanding
+- Solution Intelligence
+- Code Transformation
+- Project Analysis
+- Architecture Analysis
+- Documentation Generation
+- AI Tool Integration
+
+without becoming coupled to any specific programming domain or AI ecosystem.
+
