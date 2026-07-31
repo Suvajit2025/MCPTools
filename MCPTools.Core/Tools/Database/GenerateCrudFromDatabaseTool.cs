@@ -4,11 +4,14 @@ using MCPTools.Core.Constants;
 using MCPTools.Core.Exceptions;
 using MCPTools.Core.Extensions;
 using MCPTools.Core.Interfaces;
+using MCPTools.Core.Models.Generation;
 using MCPTools.Core.Models.Schema;
 using MCPTools.Core.Models.Tools;
 using MCPTools.Core.Services;
+using MCPTools.Core.Services.Schema;
 using MCPTools.Core.TemplateEngine;
 using MCPTools.Core.Tools.Crud;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -22,8 +25,10 @@ public sealed class GenerateCrudFromDatabaseTool
 {
     private readonly ISchemaProvider _schemaProvider;
     private readonly NamingConventionService _namingConventionService;
+    private readonly SqlServerTypeMapper _typeMapper;
     private readonly GenerateCrudTool _generateCrudTool;
     private readonly ILogger<GenerateCrudFromDatabaseTool> _logger;
+    private readonly ILogger<SqlServerSchemaProvider> _schemaProviderLogger;
     private readonly OutputOptions _outputOptions;
     private readonly DatabaseConnectionOptions _databaseOptions;
 
@@ -46,9 +51,11 @@ public sealed class GenerateCrudFromDatabaseTool
         FileGenerator fileGenerator,
         TemplateDiscoveryService templateDiscoveryService,
         NamingConventionService namingConventionService,
+        SqlServerTypeMapper typeMapper,
         ITemplateEngine templateEngine,
         GenerateCrudTool generateCrudTool,
         ILogger<GenerateCrudFromDatabaseTool> logger,
+        ILogger<SqlServerSchemaProvider> schemaProviderLogger,
         IOptions<OutputOptions> outputOptions,
         IOptions<DatabaseConnectionOptions> databaseOptions)
         : base(new ToolMetadata
@@ -71,9 +78,11 @@ public sealed class GenerateCrudFromDatabaseTool
         _ = fileGenerator ?? throw new ArgumentNullException(nameof(fileGenerator));
         _ = templateDiscoveryService ?? throw new ArgumentNullException(nameof(templateDiscoveryService));
         _namingConventionService = namingConventionService ?? throw new ArgumentNullException(nameof(namingConventionService));
+        _typeMapper = typeMapper ?? throw new ArgumentNullException(nameof(typeMapper));
         _ = templateEngine ?? throw new ArgumentNullException(nameof(templateEngine));
         _generateCrudTool = generateCrudTool ?? throw new ArgumentNullException(nameof(generateCrudTool));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _schemaProviderLogger = schemaProviderLogger ?? throw new ArgumentNullException(nameof(schemaProviderLogger));
         _outputOptions = outputOptions?.Value ?? throw new ArgumentNullException(nameof(outputOptions));
         _databaseOptions = databaseOptions?.Value ?? throw new ArgumentNullException(nameof(databaseOptions));
     }
@@ -89,27 +98,38 @@ public sealed class GenerateCrudFromDatabaseTool
         {
             ValidateRequest(request);
 
-            _logger.LogInformation("Starting database CRUD generation for table {TableName}.", request.TableName);
+            var tableName = ResolveTableName(request);
+            var qualifiedTableName = ResolveQualifiedTableName(request, tableName);
+            var schemaProvider = CreateSchemaProvider(request);
 
-            if (!await _schemaProvider.TableExistsAsync(request.TableName, cancellationToken))
+            _logger.LogInformation("Connecting to SQL Server for table {TableName}.", qualifiedTableName);
+
+            if (!await schemaProvider.TableExistsAsync(qualifiedTableName, cancellationToken))
             {
-                throw new ToolValidationException($"Table '{request.TableName}' does not exist.");
+                throw new ToolValidationException($"Table '{qualifiedTableName}' was not found.");
             }
 
-            var table = await _schemaProvider.GetTableAsync(request.TableName, cancellationToken)
-                ?? throw new ToolValidationException($"Table '{request.TableName}' could not be loaded.");
+            _logger.LogInformation("Reading schema for table {TableName}.", qualifiedTableName);
+
+            var table = await schemaProvider.GetTableAsync(qualifiedTableName, cancellationToken)
+                ?? throw new ToolValidationException($"Table '{qualifiedTableName}' could not be loaded.");
+
+            _logger.LogInformation("Found {ColumnCount} columns in table {TableName}.", table.Columns.Count, qualifiedTableName);
 
             var crudRequest = CreateCrudRequest(request, table);
+
+            _logger.LogInformation("Generating CRUD files for entity {EntityName}.", crudRequest.EntityName);
+
             var crudResponse = await _generateCrudTool.ExecuteAsync(crudRequest, cancellationToken);
 
             _logger.LogInformation(
                 "Completed database CRUD generation for table {TableName} in {ElapsedMilliseconds} ms.",
-                request.TableName,
+                qualifiedTableName,
                 stopwatch.ElapsedMilliseconds);
 
             return new GenerateCrudFromDatabaseResponse
             {
-                TableName = table.Name ?? request.TableName,
+                TableName = table.Name ?? tableName,
                 EntityName = crudRequest.EntityName,
                 CrudGeneration = crudResponse
             };
@@ -120,12 +140,17 @@ public sealed class GenerateCrudFromDatabaseTool
         }
         catch (MCPToolsException exception)
         {
-            _logger.LogError(exception, "Database CRUD generation failed for table {TableName}.", request.TableName);
+            _logger.LogError(exception, "Database CRUD generation failed.");
+            throw new ToolExecutionException(Metadata.Name, exception, includeToolName: true);
+        }
+        catch (SqlException exception)
+        {
+            _logger.LogError(exception, "SQL Server error during database CRUD generation.");
             throw new ToolExecutionException(Metadata.Name, exception, includeToolName: true);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            _logger.LogError(exception, "Database CRUD generation failed unexpectedly for table {TableName}.", request.TableName);
+            _logger.LogError(exception, "Database CRUD generation failed unexpectedly.");
             throw new ToolExecutionException(Metadata.Name, exception, includeToolName: true);
         }
     }
@@ -134,17 +159,59 @@ public sealed class GenerateCrudFromDatabaseTool
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        if (string.IsNullOrWhiteSpace(request.TableName))
+        if (string.IsNullOrWhiteSpace(request.TableName) && string.IsNullOrWhiteSpace(request.Table))
         {
-            throw new ToolValidationException("TableName is required.");
+            throw new ToolValidationException("Table name is required.");
         }
+
+        if (HasRequestConnection(request))
+        {
+            if (string.IsNullOrWhiteSpace(request.Server))
+            {
+                throw new ToolValidationException("Server is required.");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Database))
+            {
+                throw new ToolValidationException("Database is required.");
+            }
+
+            if (IsSqlAuthentication(request) &&
+                (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password)))
+            {
+                throw new ToolValidationException("Username and Password are required for SQL authentication.");
+            }
+        }
+    }
+
+    private ISchemaProvider CreateSchemaProvider(GenerateCrudFromDatabaseRequest request)
+    {
+        if (!HasRequestConnection(request))
+        {
+            return _schemaProvider;
+        }
+
+        var options = new DatabaseConnectionOptions
+        {
+            Server = request.Server,
+            Database = request.Database,
+            UserId = request.Username,
+            Password = request.Password,
+            IntegratedSecurity = !IsSqlAuthentication(request),
+            Encrypt = _databaseOptions.Encrypt,
+            TrustServerCertificate = _databaseOptions.TrustServerCertificate
+        };
+
+        return new SqlServerSchemaProvider(
+            new SqlConnectionFactory(Options.Create(options)),
+            _schemaProviderLogger);
     }
 
     private GenerateCrudRequest CreateCrudRequest(
         GenerateCrudFromDatabaseRequest request,
         TableSchema table)
     {
-        var tableName = table.Name ?? request.TableName;
+        var tableName = table.Name ?? ResolveTableName(request);
         var entityName = _namingConventionService.GetEntityName(request.EntityName ?? tableName);
         var primaryKeyColumn = table.PrimaryKey?.Columns.FirstOrDefault()
             ?? table.Columns.FirstOrDefault(column => column.IsPrimaryKey)?.Name
@@ -162,7 +229,7 @@ public sealed class GenerateCrudFromDatabaseTool
                 : request.PluralEntityName,
             TableName = tableName,
             PrimaryKey = primaryKeyColumn.ToPascalCase(),
-            PrimaryKeyType = MapSqlTypeToClrType(primaryKey),
+            PrimaryKeyType = primaryKey is null ? "string" : _typeMapper.MapToClrType(primaryKey),
             Author = request.Author,
             CompanyName = request.CompanyName,
             GenerateRepository = request.GenerateRepository,
@@ -171,8 +238,33 @@ public sealed class GenerateCrudFromDatabaseTool
             GenerateDto = request.GenerateDto,
             GenerateInterface = request.GenerateInterface,
             OutputDirectory = ResolveOutputDirectory(request),
-            OverwriteExistingFiles = request.OverwriteExistingFiles ?? _outputOptions.OverwriteExistingFiles
+            OverwriteExistingFiles = request.OverwriteExistingFiles ?? _outputOptions.OverwriteExistingFiles,
+            Properties = BuildProperties(table)
         };
+    }
+
+    private IReadOnlyList<PropertyDefinition> BuildProperties(TableSchema table)
+    {
+        return table.Columns
+            .OrderBy(column => column.Order)
+            .Select(column => new PropertyDefinition
+            {
+                Name = (column.Name ?? string.Empty).ToPascalCase(),
+                ColumnName = column.Name,
+                Type = _typeMapper.MapToClrType(column),
+                ClrType = _typeMapper.MapToClrType(column),
+                SqlType = column.DataType,
+                IsPrimaryKey = column.IsPrimaryKey,
+                IsNullable = column.IsNullable,
+                IsIdentity = column.IsIdentity,
+                IsComputed = column.IsComputed,
+                DefaultValue = column.DefaultValue,
+                MaxLength = column.MaxLength,
+                Precision = column.Precision,
+                Scale = column.Scale,
+                Order = column.Order
+            })
+            .ToArray();
     }
 
     private string ResolveNamespace(GenerateCrudFromDatabaseRequest request)
@@ -180,6 +272,11 @@ public sealed class GenerateCrudFromDatabaseTool
         if (!string.IsNullOrWhiteSpace(request.Namespace))
         {
             return request.Namespace;
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.ProjectName))
+        {
+            return request.ProjectName;
         }
 
         if (!string.IsNullOrWhiteSpace(_databaseOptions.Database))
@@ -193,56 +290,40 @@ public sealed class GenerateCrudFromDatabaseTool
     private string ResolveOutputDirectory(GenerateCrudFromDatabaseRequest request)
     {
         return string.IsNullOrWhiteSpace(request.OutputDirectory)
-            ? _outputOptions.OutputDirectory
+            ? string.IsNullOrWhiteSpace(request.OutputFolder) ? _outputOptions.OutputDirectory : request.OutputFolder
             : request.OutputDirectory;
     }
 
-    private static string MapSqlTypeToClrType(ColumnSchema? column)
+    private static string ResolveTableName(GenerateCrudFromDatabaseRequest request)
     {
-        if (column is null || string.IsNullOrWhiteSpace(column.DataType))
+        return string.IsNullOrWhiteSpace(request.TableName)
+            ? request.Table!
+            : request.TableName;
+    }
+
+    private static string ResolveQualifiedTableName(
+        GenerateCrudFromDatabaseRequest request,
+        string tableName)
+    {
+        if (tableName.Contains('.', StringComparison.Ordinal) || string.IsNullOrWhiteSpace(request.Schema))
         {
-            return "string";
+            return tableName;
         }
 
-        var type = column.DataType.ToLowerInvariant() switch
-        {
-            "bigint" => "long",
-            "binary" => "byte[]",
-            "bit" => "bool",
-            "char" => "string",
-            "date" => "DateOnly",
-            "datetime" => "DateTime",
-            "datetime2" => "DateTime",
-            "datetimeoffset" => "DateTimeOffset",
-            "decimal" => "decimal",
-            "float" => "double",
-            "image" => "byte[]",
-            "int" => "int",
-            "money" => "decimal",
-            "nchar" => "string",
-            "ntext" => "string",
-            "numeric" => "decimal",
-            "nvarchar" => "string",
-            "real" => "float",
-            "smalldatetime" => "DateTime",
-            "smallint" => "short",
-            "smallmoney" => "decimal",
-            "text" => "string",
-            "time" => "TimeOnly",
-            "timestamp" => "byte[]",
-            "tinyint" => "byte",
-            "uniqueidentifier" => "Guid",
-            "varbinary" => "byte[]",
-            "varchar" => "string",
-            "xml" => "string",
-            _ => "string"
-        };
+        return $"{request.Schema}.{tableName}";
+    }
 
-        if (!column.IsNullable || type is "string" or "byte[]")
-        {
-            return type;
-        }
+    private static bool HasRequestConnection(GenerateCrudFromDatabaseRequest request)
+    {
+        return !string.IsNullOrWhiteSpace(request.Server)
+            || !string.IsNullOrWhiteSpace(request.Database)
+            || !string.IsNullOrWhiteSpace(request.Authentication);
+    }
 
-        return $"{type}?";
+    private static bool IsSqlAuthentication(GenerateCrudFromDatabaseRequest request)
+    {
+        return string.Equals(request.Authentication, "Sql", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(request.Authentication, "SQL", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(request.Authentication, "SqlAuthentication", StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -1,16 +1,18 @@
 CREATE OR ALTER PROCEDURE [dbo].[{{StoredProcedureName}}_Insert]
-{{ParameterList}}
+(
+{{InsertSqlParameters}}
+)
 AS
 BEGIN
     SET NOCOUNT ON;
 
     INSERT INTO [dbo].[{{TableName}}]
     (
-{{Columns}}
+{{InsertColumns}}
     )
     VALUES
     (
-{{ParameterList}}
+{{InsertValues}}
     );
 END;
 GO

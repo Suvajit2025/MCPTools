@@ -31,6 +31,16 @@ public sealed class ColumnSchema
     public bool IsPrimaryKey { get; init; }
 
     /// <summary>
+    /// Gets a value indicating whether the column is computed by SQL Server.
+    /// </summary>
+    public bool IsComputed { get; init; }
+
+    /// <summary>
+    /// Gets the default value definition for the column.
+    /// </summary>
+    public string? DefaultValue { get; init; }
+
+    /// <summary>
     /// Gets the maximum column length.
     /// </summary>
     public int? MaxLength { get; init; }
@@ -44,4 +54,9 @@ public sealed class ColumnSchema
     /// Gets the numeric scale.
     /// </summary>
     public int? Scale { get; init; }
+
+    /// <summary>
+    /// Gets the ordinal position of the column in the table.
+    /// </summary>
+    public int Order { get; init; }
 }

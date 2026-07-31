@@ -34,7 +34,9 @@ public sealed class ToolDiscoveryServiceTests
             && descriptor.Author == ToolMetadataConstants.DefaultAuthor
             && descriptor.SupportedFrameworkVersion == ToolMetadataConstants.SupportedFrameworkVersion
             && descriptor.Tags.Contains(ToolMetadataConstants.Tags.Crud)
-            && descriptor.RequestSchema.Properties.Any(property => property.Name == nameof(GenerateCrudRequest.EntityName))
+            && descriptor.RequestSchema.Properties.Any(property =>
+                property.Name == nameof(GenerateCrudRequest.EntityName)
+                && property.PropertyType == typeof(string))
             && descriptor.ResponseSchema.Properties.Any(property => property.Name == nameof(GenerateCrudResponse.GeneratedFiles)));
         Assert.Contains(catalog.Tools, descriptor =>
             descriptor.ToolName == "generate-crud-from-database"
@@ -76,9 +78,9 @@ public sealed class ToolDiscoveryServiceTests
                 SupportedFrameworkVersion = "Test",
                 ToolType = typeof(object),
                 RequestType = typeof(object),
-                RequestSchema = new ToolSchema { TypeName = nameof(Object) },
+                RequestSchema = new ToolSchema { SchemaType = typeof(object) },
                 ResponseType = typeof(object),
-                ResponseSchema = new ToolSchema { TypeName = nameof(Object) }
+                ResponseSchema = new ToolSchema { SchemaType = typeof(object) }
             },
             new ToolDescriptor
             {
@@ -89,9 +91,9 @@ public sealed class ToolDiscoveryServiceTests
                 SupportedFrameworkVersion = "Test",
                 ToolType = typeof(object),
                 RequestType = typeof(object),
-                RequestSchema = new ToolSchema { TypeName = nameof(Object) },
+                RequestSchema = new ToolSchema { SchemaType = typeof(object) },
                 ResponseType = typeof(object),
-                ResponseSchema = new ToolSchema { TypeName = nameof(Object) }
+                ResponseSchema = new ToolSchema { SchemaType = typeof(object) }
             }
         ]);
 

@@ -1,13 +1,15 @@
 CREATE OR ALTER PROCEDURE [dbo].[{{StoredProcedureName}}_Update]
-    @{{PrimaryKey}} {{PrimaryKeyType}},
-{{ParameterList}}
+(
+{{UpdateSqlParameters}}
+)
 AS
 BEGIN
     SET NOCOUNT ON;
 
     UPDATE [dbo].[{{TableName}}]
     SET
-{{Columns}}
-    WHERE [{{PrimaryKey}}] = @{{PrimaryKey}};
+{{UpdateSetClause}}
+    WHERE
+{{PrimaryKeyWhere}};
 END;
 GO

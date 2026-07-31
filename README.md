@@ -110,24 +110,30 @@ dotnet build
 dotnet test
 ```
 
-### 6. Run the MCP Server Demo
+### 6. Build the MCP Server
 
-`MCPTools.Server` is a demonstration host for the server-side MCPTools pipeline. It does not integrate with an AI client yet.
+`MCPTools.Server` exposes registered MCPTools tools through the official .NET MCP SDK using the MCP stdio transport. MCP-compatible clients can launch this process and communicate using JSON-RPC over standard input and standard output.
 
 ```bash
-dotnet run --project src/MCPTools.Server
+dotnet build src/MCPTools.Server/MCPTools.Server.csproj
 ```
 
-Available interactive commands:
+For MCP clients such as Codex in VS Code, launch the compiled server DLL directly instead of using `dotnet run`. This avoids build and restore output interfering with the stdio JSON-RPC protocol.
 
-```text
-list-tools
-run-tool GenerateCrudTool
-help
-exit
+```json
+{
+  "servers": {
+    "mcptools": {
+      "type": "stdio",
+      "command": "dotnet",
+      "args": [
+        "${workspaceFolder}/src/MCPTools.Server/bin/Debug/net10.0/MCPTools.Server.dll"
+      ],
+      "cwd": "${workspaceFolder}/src/MCPTools.Server"
+    }
+  }
+}
 ```
-
-`list-tools` displays the tools discovered from `MCPTools.Core`. `run-tool GenerateCrudTool` invokes the existing CRUD generator using the sample values in `src/MCPTools.Server/appsettings.json`.
 
 ## Documentation
 

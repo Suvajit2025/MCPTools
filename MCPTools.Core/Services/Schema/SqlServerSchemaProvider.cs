@@ -200,17 +200,28 @@ public sealed class SqlServerSchemaProvider : ISchemaProvider
     {
         const string sql = """
             SELECT
-                c.COLUMN_NAME,
-                c.DATA_TYPE,
-                c.IS_NULLABLE,
-                COLUMNPROPERTY(OBJECT_ID(c.TABLE_SCHEMA + '.' + c.TABLE_NAME), c.COLUMN_NAME, 'IsIdentity') AS IS_IDENTITY,
-                c.CHARACTER_MAXIMUM_LENGTH,
-                c.NUMERIC_PRECISION,
-                c.NUMERIC_SCALE
-            FROM INFORMATION_SCHEMA.COLUMNS c
-            WHERE c.TABLE_SCHEMA = @Schema
-              AND c.TABLE_NAME = @TableName
-            ORDER BY c.ORDINAL_POSITION;
+                c.name AS ColumnName,
+                typ.name AS DataType,
+                c.is_nullable AS IsNullable,
+                CONVERT(bit, CASE WHEN ic.column_id IS NULL THEN 0 ELSE 1 END) AS IsIdentity,
+                CASE
+                    WHEN typ.name IN ('nchar', 'nvarchar') AND c.max_length > 0 THEN c.max_length / 2
+                    ELSE c.max_length
+                END AS MaxLength,
+                c.precision AS Precision,
+                c.scale AS Scale,
+                c.is_computed AS IsComputed,
+                dc.definition AS DefaultValue,
+                c.column_id AS OrdinalPosition
+            FROM sys.tables t
+            INNER JOIN sys.schemas s ON s.schema_id = t.schema_id
+            INNER JOIN sys.columns c ON c.object_id = t.object_id
+            INNER JOIN sys.types typ ON typ.user_type_id = c.user_type_id
+            LEFT JOIN sys.identity_columns ic ON ic.object_id = c.object_id AND ic.column_id = c.column_id
+            LEFT JOIN sys.default_constraints dc ON dc.parent_object_id = c.object_id AND dc.parent_column_id = c.column_id
+            WHERE s.name = @Schema
+              AND t.name = @TableName
+            ORDER BY c.column_id;
             """;
 
         var primaryKeyColumns = primaryKey?.Columns.ToHashSet(StringComparer.OrdinalIgnoreCase)
@@ -231,12 +242,15 @@ public sealed class SqlServerSchemaProvider : ISchemaProvider
             {
                 Name = name,
                 DataType = reader.GetString(1),
-                IsNullable = string.Equals(reader.GetString(2), "YES", StringComparison.OrdinalIgnoreCase),
-                IsIdentity = !await reader.IsDBNullAsync(3, cancellationToken) && reader.GetInt32(3) == 1,
+                IsNullable = reader.GetBoolean(2),
+                IsIdentity = reader.GetBoolean(3),
                 IsPrimaryKey = primaryKeyColumns.Contains(name),
                 MaxLength = GetNullableInt32(reader, 4),
                 Precision = GetNullableByteAsInt32(reader, 5),
-                Scale = GetNullableInt32(reader, 6)
+                Scale = GetNullableInt32(reader, 6),
+                IsComputed = reader.GetBoolean(7),
+                DefaultValue = await reader.IsDBNullAsync(8, cancellationToken) ? null : reader.GetString(8),
+                Order = reader.GetInt32(9)
             });
         }
 

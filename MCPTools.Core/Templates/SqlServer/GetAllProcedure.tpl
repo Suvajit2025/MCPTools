@@ -4,7 +4,7 @@ BEGIN
     SET NOCOUNT ON;
 
     SELECT
-{{Columns}}
+{{SelectColumns}}
     FROM [dbo].[{{TableName}}];
 END;
 GO

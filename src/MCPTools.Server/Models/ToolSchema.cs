@@ -6,9 +6,9 @@ namespace MCPTools.Server.Models;
 public sealed class ToolSchema
 {
     /// <summary>
-    /// Gets the schema type name.
+    /// Gets the CLR type represented by the schema.
     /// </summary>
-    public required string TypeName { get; init; }
+    public required Type SchemaType { get; init; }
 
     /// <summary>
     /// Gets the schema properties.

@@ -1,3 +1,5 @@
+using MCPTools.Core.Models.Generation;
+
 namespace MCPTools.Core.Tools.Crud;
 
 /// <summary>
@@ -79,4 +81,9 @@ public sealed class GenerateCrudRequest
     /// Gets a value indicating whether existing generated files should be overwritten.
     /// </summary>
     public bool OverwriteExistingFiles { get; init; }
+
+    /// <summary>
+    /// Gets the discovered entity properties to use during generation.
+    /// </summary>
+    public IReadOnlyList<PropertyDefinition> Properties { get; init; } = [];
 }

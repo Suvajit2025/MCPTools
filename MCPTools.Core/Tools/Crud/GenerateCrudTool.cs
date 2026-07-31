@@ -67,7 +67,7 @@ public sealed class GenerateCrudTool : ToolBase<GenerateCrudRequest, GenerateCru
             ValidateRequest(request);
 
             var entity = CreateEntityDefinition(request);
-            var placeholders = BuildPlaceholders(request, entity);
+            var placeholders = BuildPlaceholders(entity);
             var result = await GenerateAllTemplatesAsync(request, entity, placeholders, cancellationToken);
 
             stopwatch.Stop();
@@ -128,29 +128,14 @@ public sealed class GenerateCrudTool : ToolBase<GenerateCrudRequest, GenerateCru
             GenerateController = request.GenerateController,
             GenerateDto = request.GenerateDto,
             GenerateMapping = true,
-            GenerateSql = true
+            GenerateSql = true,
+            Properties = request.Properties
         };
     }
 
-    private IReadOnlyDictionary<string, string> BuildPlaceholders(
-        GenerateCrudRequest request,
-        EntityDefinition entity)
+    private IReadOnlyDictionary<string, string> BuildPlaceholders(EntityDefinition entity)
     {
-        var placeholders = new Dictionary<string, string>(_placeholderBuilder.Build(entity), StringComparer.Ordinal)
-        {
-            [PlaceholderConstants.Route] = entity.PluralEntityName.ToLowerInvariant(),
-            [PlaceholderConstants.ApiVersion] = "1",
-            [PlaceholderConstants.Database] = entity.TableName,
-            [PlaceholderConstants.ProjectName] = request.Namespace,
-            [PlaceholderConstants.ConnectionString] = string.Empty,
-            [PlaceholderConstants.RepositoryName] = _namingConventionService.GetRepositoryName(entity.EntityName),
-            [PlaceholderConstants.ServiceName] = _namingConventionService.GetServiceName(entity.EntityName),
-            [PlaceholderConstants.ManagerName] = _namingConventionService.GetManagerName(entity.EntityName),
-            [PlaceholderConstants.ControllerName] = _namingConventionService.GetControllerName(entity.EntityName),
-            [PlaceholderConstants.DtoName] = _namingConventionService.GetDtoName(entity.EntityName)
-        };
-
-        return placeholders;
+        return _placeholderBuilder.Build(entity);
     }
 
     private async Task<CrudGenerationResult> GenerateAllTemplatesAsync(

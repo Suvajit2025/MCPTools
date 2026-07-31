@@ -16,6 +16,16 @@ public sealed class PropertyDefinition
     public required string Type { get; init; }
 
     /// <summary>
+    /// Gets the CLR type mapped from the source data type.
+    /// </summary>
+    public string? ClrType { get; init; }
+
+    /// <summary>
+    /// Gets the source SQL type when the property was created from database metadata.
+    /// </summary>
+    public string? SqlType { get; init; }
+
+    /// <summary>
     /// Gets the database column name mapped to the property.
     /// </summary>
     public string? ColumnName { get; init; }
@@ -39,6 +49,11 @@ public sealed class PropertyDefinition
     /// Gets a value indicating whether the property is database-generated.
     /// </summary>
     public bool IsIdentity { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether the property is computed by the database.
+    /// </summary>
+    public bool IsComputed { get; init; }
 
     /// <summary>
     /// Gets a value indicating whether the property is required.

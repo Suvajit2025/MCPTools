@@ -6,14 +6,59 @@ namespace MCPTools.Core.Tools.Database;
 public sealed class GenerateCrudFromDatabaseRequest
 {
     /// <summary>
+    /// Gets the SQL Server name or address.
+    /// </summary>
+    public string? Server { get; init; }
+
+    /// <summary>
+    /// Gets the authentication type. Supported values are Windows and Sql.
+    /// </summary>
+    public string? Authentication { get; init; }
+
+    /// <summary>
+    /// Gets the SQL login user name when SQL authentication is used.
+    /// </summary>
+    public string? Username { get; init; }
+
+    /// <summary>
+    /// Gets the SQL login password when SQL authentication is used.
+    /// </summary>
+    public string? Password { get; init; }
+
+    /// <summary>
+    /// Gets the database name.
+    /// </summary>
+    public string? Database { get; init; }
+
+    /// <summary>
+    /// Gets the database schema name.
+    /// </summary>
+    public string? Schema { get; init; }
+
+    /// <summary>
+    /// Gets the table name using the compact MCP request field name.
+    /// </summary>
+    public string? Table { get; init; }
+
+    /// <summary>
+    /// Gets the project name associated with generated artifacts.
+    /// </summary>
+    public string? ProjectName { get; init; }
+
+    /// <summary>
     /// Gets the database table name used as the source for CRUD generation.
     /// </summary>
-    public required string TableName { get; init; }
+    public string? TableName { get; init; }
 
     /// <summary>
     /// Gets the optional root namespace used for generated code.
     /// </summary>
     public string? Namespace { get; init; }
+
+    /// <summary>
+    /// Gets the output folder using the compact MCP request field name.
+    /// </summary>
+    public string? OutputFolder { get; init; }
 
     /// <summary>
     /// Gets the optional output directory where generated files will be written.

@@ -1,0 +1,14 @@
+{
+  "servers": {
+    "mcptools": {
+      "type": "stdio",
+      "command": "C:\\Windows\\System32\\cmd.exe",
+      "args": [
+        "/d",
+        "/c",
+        "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"${workspaceFolder}\\src\\MCPTools.Server\\bin\\Debug\\net10.0\\MCPTools.Server.dll\""
+      ],
+      "cwd": "${workspaceFolder}/src/MCPTools.Server"
+    }
+  }
+}

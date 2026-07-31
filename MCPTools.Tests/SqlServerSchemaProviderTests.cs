@@ -31,9 +31,9 @@ public sealed class SqlServerSchemaProviderTests
             [["dbo", "Employee"]],
             [["PK_Employee", "EmployeeId"]],
             [
-                ["EmployeeId", "int", "NO", 1, DBNull.Value, (byte)10, 0],
-                ["FirstName", "nvarchar", "NO", 0, 100, DBNull.Value, DBNull.Value],
-                ["DepartmentId", "int", "YES", 0, DBNull.Value, (byte)10, 0]
+                ["EmployeeId", "int", false, true, DBNull.Value, (byte)10, (byte)0, false, DBNull.Value, 1],
+                ["FirstName", "nvarchar", false, false, 100, (byte)0, (byte)0, false, DBNull.Value, 2],
+                ["DepartmentId", "int", true, false, DBNull.Value, (byte)10, (byte)0, false, "((1))", 3]
             ],
             [["FK_Employee_Department", "DepartmentId", "Department", "DepartmentId"]],
             [["IX_Employee_FirstName", false, "FirstName"]]
@@ -58,7 +58,7 @@ public sealed class SqlServerSchemaProviderTests
         var connection = new FakeDbConnection([
             [["dbo", "Employee"]],
             [["PK_Employee", "EmployeeId"]],
-            [["EmployeeId", "int", "NO", 1, DBNull.Value, (byte)10, 0]],
+            [["EmployeeId", "int", false, true, DBNull.Value, (byte)10, (byte)0, false, DBNull.Value, 1]],
             [],
             []
         ]);

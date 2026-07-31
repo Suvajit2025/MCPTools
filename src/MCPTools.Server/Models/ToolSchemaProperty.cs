@@ -11,9 +11,9 @@ public sealed class ToolSchemaProperty
     public required string Name { get; init; }
 
     /// <summary>
-    /// Gets the property type name.
+    /// Gets the CLR type of the property.
     /// </summary>
-    public required string TypeName { get; init; }
+    public required Type PropertyType { get; init; }
 
     /// <summary>
     /// Gets a value indicating whether the property is required.

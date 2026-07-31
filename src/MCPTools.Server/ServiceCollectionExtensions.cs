@@ -2,13 +2,13 @@ using MCPTools.Core.Configuration;
 using MCPTools.Core.Extensions;
 using MCPTools.Core.Interfaces;
 using MCPTools.Core.Models.Schema;
+using MCPTools.Server.Adapters;
 using MCPTools.Server.Models;
 using MCPTools.Server.Security;
 using MCPTools.Server.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Hosting;
 
 namespace MCPTools.Server.Extensions;
 
@@ -37,6 +37,7 @@ public static class ServiceCollectionExtensions
         services.Configure<DatabaseConnectionOptions>(configuration.GetSection("MCPTools:Database"));
         RegisterToolRegistrations(services);
         services.TryAddSingleton<ToolDiscoveryService>();
+        services.TryAddSingleton<JsonSchemaBuilder>();
         services.TryAddSingleton(serviceProvider =>
             serviceProvider.GetRequiredService<ToolDiscoveryService>().Discover());
         services.TryAddSingleton<IMcpAuthenticationHandler, AllowAnonymousAuthenticationHandler>();
@@ -44,8 +45,7 @@ public static class ServiceCollectionExtensions
         services.TryAddSingleton<IMcpPermissionEvaluator, AllowAllPermissionEvaluator>();
         services.TryAddSingleton<McpSecurityMiddleware>();
         services.TryAddSingleton<McpRequestProcessor>();
-        services.TryAddSingleton<DemoToolRequestFactory>();
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, McpHost>());
+        services.TryAddSingleton<McpToolAdapter>();
 
         return services;
     }

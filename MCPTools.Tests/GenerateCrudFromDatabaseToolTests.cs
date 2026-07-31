@@ -2,6 +2,7 @@ using MCPTools.Core.Configuration;
 using MCPTools.Core.Interfaces;
 using MCPTools.Core.Models.Schema;
 using MCPTools.Core.Services;
+using MCPTools.Core.Services.Schema;
 using MCPTools.Core.TemplateEngine;
 using MCPTools.Core.Tools.Crud;
 using MCPTools.Core.Tools.Database;
@@ -32,6 +33,16 @@ public sealed class GenerateCrudFromDatabaseToolTests
         Assert.True(response.CrudGeneration.Success);
         Assert.Equal(16, response.CrudGeneration.GeneratedFiles.Count);
         Assert.All(response.CrudGeneration.GeneratedFiles, file => Assert.True(File.Exists(file)));
+
+        var insertProcedure = File.ReadAllText(Path.Combine(outputDirectory, "SqlServer", "Employee.Insert.sql"));
+        var updateProcedure = File.ReadAllText(Path.Combine(outputDirectory, "SqlServer", "Employee.Update.sql"));
+
+        Assert.Contains("@FirstName NVARCHAR(100)", insertProcedure, StringComparison.Ordinal);
+        Assert.DoesNotContain("@EmployeeId", insertProcedure, StringComparison.Ordinal);
+        Assert.DoesNotContain("FullName", insertProcedure, StringComparison.Ordinal);
+        Assert.Contains("[FirstName] = @FirstName", updateProcedure, StringComparison.Ordinal);
+        Assert.DoesNotContain("[EmployeeId] = @EmployeeId", updateProcedure, StringComparison.Ordinal);
+        Assert.DoesNotContain("[FullName] = @FullName", updateProcedure, StringComparison.Ordinal);
     }
 
     private static GenerateCrudFromDatabaseTool CreateTool(string templateRoot, string outputDirectory)
@@ -69,9 +80,11 @@ public sealed class GenerateCrudFromDatabaseToolTests
             fileGenerator,
             templateDiscoveryService,
             namingConventionService,
+            new SqlServerTypeMapper(),
             templateEngine,
             crudTool,
             NullLogger<GenerateCrudFromDatabaseTool>.Instance,
+            NullLogger<SqlServerSchemaProvider>.Instance,
             outputOptions,
             databaseOptions);
     }
@@ -103,10 +116,25 @@ public sealed class GenerateCrudFromDatabaseToolTests
         {
             var path = Path.Combine(templateRoot, template);
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-            File.WriteAllText(path, "{{Namespace}} {{EntityName}} {{TableName}} {{PrimaryKey}} {{PrimaryKeyType}}");
+            File.WriteAllText(path, CreateTemplateContent(template));
         }
 
         return templateRoot;
+    }
+
+    private static string CreateTemplateContent(string template)
+    {
+        if (template.Equals("SqlServer/InsertProcedure.tpl", StringComparison.OrdinalIgnoreCase))
+        {
+            return "{{InsertSqlParameters}}\n{{InsertColumns}}\n{{InsertValues}}";
+        }
+
+        if (template.Equals("SqlServer/UpdateProcedure.tpl", StringComparison.OrdinalIgnoreCase))
+        {
+            return "{{UpdateSqlParameters}}\n{{UpdateSetClause}}";
+        }
+
+        return "{{Namespace}} {{EntityName}} {{TableName}} {{PrimaryKey}} {{PrimaryKeyType}} {{Properties}}";
     }
 
     private sealed class FakeSchemaProvider : ISchemaProvider
@@ -154,7 +182,16 @@ public sealed class GenerateCrudFromDatabaseToolTests
                     {
                         Name = "FirstName",
                         DataType = "nvarchar",
-                        MaxLength = 100
+                        MaxLength = 100,
+                        Order = 2
+                    },
+                    new ColumnSchema
+                    {
+                        Name = "FullName",
+                        DataType = "nvarchar",
+                        MaxLength = 201,
+                        IsComputed = true,
+                        Order = 3
                     }
                 ]
             };

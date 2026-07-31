@@ -38,6 +38,7 @@ public static class ServiceCollectionExtensions
         services.TryAddSingleton<ToolExecutor>();
         services.TryAddSingleton<IDatabaseConnectionFactory, SqlConnectionFactory>();
         services.TryAddSingleton<ISchemaProvider, SqlServerSchemaProvider>();
+        services.TryAddSingleton<SqlServerTypeMapper>();
         services.TryAddSingleton<ISolutionScanner, SolutionScanner>();
         services.TryAddSingleton<IRoslynParser, RoslynParser>();
         services.TryAddSingleton<IDependencyAnalyzer, DependencyAnalyzer>();

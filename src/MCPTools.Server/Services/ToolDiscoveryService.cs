@@ -95,39 +95,19 @@ public sealed class ToolDiscoveryService
     {
         return new ToolSchema
         {
-            TypeName = GetFriendlyTypeName(type),
+            SchemaType = type,
             Properties = type
                 .GetProperties(BindingFlags.Instance | BindingFlags.Public)
                 .Where(property => property.GetMethod is not null)
                 .Select(property => new ToolSchemaProperty
                 {
                     Name = property.Name,
-                    TypeName = GetFriendlyTypeName(property.PropertyType),
+                    PropertyType = property.PropertyType,
                     IsRequired = property.GetCustomAttribute<RequiredMemberAttribute>() is not null
                 })
                 .OrderBy(property => property.Name, StringComparer.OrdinalIgnoreCase)
                 .ToArray()
         };
-    }
-
-    private static string GetFriendlyTypeName(Type type)
-    {
-        var nullableType = Nullable.GetUnderlyingType(type);
-
-        if (nullableType is not null)
-        {
-            return $"{GetFriendlyTypeName(nullableType)}?";
-        }
-
-        if (!type.IsGenericType)
-        {
-            return type.Name;
-        }
-
-        var genericTypeName = type.Name[..type.Name.IndexOf('`', StringComparison.Ordinal)];
-        var genericArguments = string.Join(", ", type.GetGenericArguments().Select(GetFriendlyTypeName));
-
-        return $"{genericTypeName}<{genericArguments}>";
     }
 
     private static Type? GetToolContract(Type toolType)

@@ -1,12 +1,15 @@
 CREATE OR ALTER PROCEDURE [dbo].[{{StoredProcedureName}}_GetById]
-    @{{PrimaryKey}} {{PrimaryKeyType}}
+(
+{{PrimaryKeySqlParameters}}
+)
 AS
 BEGIN
     SET NOCOUNT ON;
 
     SELECT
-{{Columns}}
+{{SelectColumns}}
     FROM [dbo].[{{TableName}}]
-    WHERE [{{PrimaryKey}}] = @{{PrimaryKey}};
+    WHERE
+{{PrimaryKeyWhere}};
 END;
 GO
